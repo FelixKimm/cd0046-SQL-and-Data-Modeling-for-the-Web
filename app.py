@@ -13,6 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -22,6 +23,7 @@ moment = Moment(app)
 app.config.from_object('config')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 db = SQLAlchemy(app)
+csrf = CSRFProtect(app)
 
 # TODO: connect to a local postgresql database
 
@@ -78,6 +80,7 @@ class Artist(db.Model):
 
     art_shows = db.relationship('Show', back_populates='artist')
 
+
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
@@ -111,6 +114,19 @@ def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
   data=[]
+  locations = Venue.query.all()
+
+  for location in locations:
+    shows = Show.query.filter(Show.venue_id == location.id, Show.start_time > datetime.now()).all()
+
+    location_data = {
+        'id': location.id,
+        'name': location.name,
+        'num_upcoming_shows': len(shows)
+    }
+
+    data.append(location_data)
+
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
@@ -222,14 +238,23 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  form = ArtistForm(request.form, meta={"csrf": False})
+  if form.validate():
+      try:
+        create_venue = Venue(name=request.form['name'], city=request.form['city'], state=request.form['state'], address=request.form['address'], phone=request.form['phone'], image_link=request.form['image_link'], genres=request.form.getlist('genres', type=str), facebook_link=request.form['facebook_link'], website_link=request.form['website_link'], seeking_talent="seeking_talent" in request.form, seeking_description=request.form['seeking_description'])
+        db.session.add(create_venue)
+        db.session.commit()
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+        flash('Venue '+form.name.data+' was successfully Created!')  
+
+      except:
+        
+        flash('An error occurred. Venue '+ form.name.data + ' could not be Created!.')
+      
+      finally:
+
+        db.session.close()
+
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
