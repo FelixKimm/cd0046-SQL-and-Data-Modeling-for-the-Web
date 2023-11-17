@@ -166,9 +166,8 @@ def show_venue(venue_id):
   past_shows = []
   upcoming_shows = []
 
-  coming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time > datetime.now()).all()
-  old_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time <  datetime.now()).all()
- 
+  coming_shows = Show.query.join(Artist).filter(Show.venue_id == venue_id, Show.start_time > datetime.now()).all()
+  old_shows = Show.query.join(Artist).filter(Show.venue_id == venue_id, Show.start_time < datetime.now()).all()
   for show in coming_shows:
 
     upcoming_shows.append({
@@ -275,9 +274,9 @@ def show_artist(artist_id):
 
     past_shows = []
     upcoming_shows = []
-
-    coming_shows = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time > datetime.now()).all()
-    old_shows = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time < datetime.now()).all()
+    
+    coming_shows = Show.query.join(Venue).filter(Show.artist_id == artist_id, Show.start_time > datetime.now()).all()
+    old_shows = Show.query.join(Venue).filter(Show.artist_id == artist_id, Show.start_time < datetime.now()).all()
 
     for show in coming_shows:
       upcoming_shows.append({
