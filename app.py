@@ -168,8 +168,8 @@ def show_venue(venue_id):
 
   coming_shows = Show.query.join(Artist).filter(Show.venue_id == venue_id, Show.start_time > datetime.now()).all()
   old_shows = Show.query.join(Artist).filter(Show.venue_id == venue_id, Show.start_time < datetime.now()).all()
-  for show in coming_shows:
 
+  for show in coming_shows:
     upcoming_shows.append({
       'artist_id': show.artist.id,
       'artist_name': show.artist.name,
